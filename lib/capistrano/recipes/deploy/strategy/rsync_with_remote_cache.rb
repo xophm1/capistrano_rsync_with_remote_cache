@@ -13,7 +13,7 @@ module Capistrano
 
         def update_remote_cache
           target_hostname = roles[:app].servers[0].host
-          cmd = "rsync -rlogvz #{Dir.pwd}/ #{user}@#{target_hostname}:#{configuration[:remote_cache]}"
+          cmd = "rsync -rlogvz --delete --delete-excluded --perms --chmod=g+w #{Dir.pwd}/ #{user}@#{target_hostname}:#{configuration[:remote_cache]}"
           rsync_exclude.each { |pattern|
               cmd = cmd + " --exclude=#{pattern}"
           }
@@ -21,7 +21,8 @@ module Capistrano
         end
 
         def copy_remote_cache
-          cmd = "cp -R #{configuration[:remote_cache]} #{configuration[:release_path]}"
+          # Use rsync for copy because: cp -p fails with error "operation not supported" on our ovh server
+          cmd = "rsync -rlog --perms #{configuration[:remote_cache]}/ #{configuration[:release_path]}"
           run cmd
         end
 
